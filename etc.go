@@ -54,8 +54,9 @@ func (c Config) Dirs() []string {
 		return c.Locations
 	}
 	paths := make([]string, 0, len(c.Locations))
+	v := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(c.Name))
 	for _, l := range c.Locations {
-		if filepath.Base(l) != c.Name {
+		if filepath.Base(l) != c.Name && l != os.Getenv(v) {
 			l = filepath.Join(l, c.Name)
 		}
 		paths = append(paths, l)
