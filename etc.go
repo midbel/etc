@@ -32,9 +32,13 @@ func init() {
 	switch runtime.GOOS {
 	case "linux":
 		p := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(prgname))
+		f := os.Getenv(fmt.Sprintf("%s_FILENAME", strings.ToUpper(prgname)))
+		if f == "" {
+			f = prgname
+		}
 		DefaultConfig = &Config{
 			Name:      prgname,
-			Files:     []string{prgname},
+			Files:     []string{f},
 			Locations: []string{"/etc", "/usr/local/etc", XDGConfigHome, os.Getenv(p)},
 		}
 	}
