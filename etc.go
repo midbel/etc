@@ -5,9 +5,17 @@ import (
 	"encoding/xml"
 	"os"
 	"path/filepath"
+	"strings"
 	"runtime"
 
 	"github.com/midbel/ini"
+)
+
+var (
+	XDGDataDir = os.Getenv("XDG_DATA_DIRS")
+	XDGDataHome = os.Getenv("XDG_DATA_HOME")
+	XDGConfigHome = os.Getenv("XDG_CONFIG_HOME")
+	XDGConfigDirs = os.Getenv("XDG_CONFIG_DIRS")
 )
 
 type Config struct {
@@ -19,12 +27,14 @@ type Config struct {
 var DefaultConfig *Config
 
 func init() {
+	prgname := os.Args[0]
 	switch runtime.GOOS {
 	case "linux":
+		p := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(prgname))
 		DefaultConfig = &Config{
-			Name:      os.Args[0],
-			Files:     []string{os.Args[0]},
-			Locations: []string{"/etc", "/usr/local/etc"},
+			Name:      prgname,
+			Files:     []string{prgname},
+			Locations: []string{"/etc", "/usr/local/etc", XDGConfigHome, os.Getenv(p)},
 		}
 	}
 }
@@ -57,6 +67,7 @@ func configure(v interface{}, paths []string) error {
 	for _, p := range paths {
 		r, err := os.Open(p)
 		if err != nil {
+			err = nil
 			continue
 		}
 		switch filepath.Ext(p) {
