@@ -12,13 +12,6 @@ import (
 	"github.com/midbel/ini"
 )
 
-var (
-	XDGDataDir = os.Getenv("XDG_DATA_DIRS")
-	XDGDataHome = os.Getenv("XDG_DATA_HOME")
-	XDGConfigHome = os.Getenv("XDG_CONFIG_HOME")
-	XDGConfigDirs = os.Getenv("XDG_CONFIG_DIRS")
-)
-
 type Config struct {
 	Name      string
 	Files     []string
@@ -39,7 +32,7 @@ func init() {
 		DefaultConfig = &Config{
 			Name:      prgname,
 			Files:     []string{f},
-			Locations: []string{"/etc", "/usr/local/etc", XDGConfigHome, os.Getenv(p)},
+			Locations: []string{"/etc", "/usr/local/etc", os.Getenv(p)},
 		}
 	}
 }
