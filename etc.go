@@ -75,7 +75,7 @@ func configure(v interface{}, paths []string) error {
 		case ".xml":
 			err = xml.NewDecoder(r).Decode(v)
 		case ".ini", "":
-			err = ini.Read(r, v, "")
+			err = ini.NewReader(r).Read(v)
 		}
 		r.Close()
 	}
