@@ -24,7 +24,15 @@ func init() {
 	prgname := os.Args[0]
 	switch runtime.GOOS {
 	case "linux":
+		locations := []string{"/etc", "/usr/local/etc"}
 		p := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(prgname))
+		if p := os.Getenv(p); p != "" {
+			locations = append(locations, p)
+		}
+		/*d := fmt.Sprintf("%s_CONFIG", strings.ToUpper(prgname))
+		if d := os.Getenv(d); d != "" {
+			locations = append(locations, d)
+		}*/
 		f := os.Getenv(fmt.Sprintf("%s_FILENAME", strings.ToUpper(prgname)))
 		if f == "" {
 			f = prgname
@@ -32,7 +40,7 @@ func init() {
 		DefaultConfig = &Config{
 			Name:      prgname,
 			Files:     []string{f},
-			Locations: []string{"/etc", "/usr/local/etc", os.Getenv(p)},
+			Locations: locations,
 		}
 	}
 }
