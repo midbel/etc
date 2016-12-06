@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	Default   string
 	Name      string
 	Files     []string
 	Locations []string
@@ -21,55 +22,45 @@ type Config struct {
 var DefaultConfig *Config
 
 func init() {
-	prgname := os.Args[0]
+	prgname := strings.ToUpper(os.Args[0])
+	dirname := os.Getenv(fmt.Sprintf("%s_DIRNAME", prgname))
+	filename := os.Getenv(fmt.Sprintf("%s_FILENAME", prgname))
+	config := os.Getenv(fmt.Sprintf("%s_CONFIG", prgname)) 
+	
+	var locations []string
 	switch runtime.GOOS {
 	case "linux":
-		locations := []string{"/etc", "/usr/local/etc"}
-		p := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(prgname))
-		if p := os.Getenv(p); p != "" {
-			locations = append(locations, p)
+		locations = append(locations, "/etc", "/usr/local/etc")
+		if dirname != "" {
+			locations = append(locations, dirname)
 		}
-		/*d := fmt.Sprintf("%s_CONFIG", strings.ToUpper(prgname))
-		if d := os.Getenv(d); d != "" {
-			locations = append(locations, d)
-		}*/
-		f := os.Getenv(fmt.Sprintf("%s_FILENAME", strings.ToUpper(prgname)))
-		if f == "" {
-			f = prgname
+		if filename == "" {
+			filename = os.Args[0]
 		}
 		DefaultConfig = &Config{
-			Name:      prgname,
-			Files:     []string{f},
+			Default:   config,
+			Name:      os.Args[0],
+			Files:     []string{filename},
 			Locations: locations,
 		}
 	}
 }
 
-func Configure(v interface{}, others ...string) error {
-	paths := configPaths(DefaultConfig.Dirs(), DefaultConfig.Files, others...)
-	return configure(v, paths)
-}
-
-func (c Config) Dirs() []string {
-	if c.Name == "" {
-		return c.Locations
-	}
-	paths := make([]string, 0, len(c.Locations))
-	v := fmt.Sprintf("%s_DIRNAME", strings.ToUpper(c.Name))
-	for _, l := range c.Locations {
-		if filepath.Base(l) != c.Name && l != os.Getenv(v) {
-			l = filepath.Join(l, c.Name)
-		}
-		paths = append(paths, l)
-	}
-	return paths
+func Configure(v interface{}) error {
+	return DefaultConfig.Configure(v)
 }
 
 func (c Config) Configure(v interface{}) error {
-	return configure(v, configPaths(c.Dirs(), c.Files))
-}
-
-func configure(v interface{}, paths []string) error {
+	paths := make([]string, 0, 1 + len(c.Files) * len(c.Locations))
+	if c.Default != "" {
+		paths = append(paths, c.Default)
+	}
+	for _,l := range c.Locations {
+		l = filepath.Join(l, c.Name)
+		for _, f := range c.Files {
+			paths = append(paths, filepath.Join(l, f))
+		}
+	}
 	var err error
 	for _, p := range paths {
 		r, err := os.Open(p)
@@ -86,34 +77,11 @@ func configure(v interface{}, paths []string) error {
 			err = ini.NewReader(r).Read(v)
 		}
 		r.Close()
+		if p == c.Default && err != nil {
+			break
+		}
 	}
 	return err
 }
 
-func configPaths(dirs []string, files []string, others ...string) []string {
-	for _, d := range others {
-		if d == "" {
-			continue
-		}
-		dir, base := filepath.Split(d)
-		dirs = append(dirs, dir)
-		if base == "" {
-			continue
-		}
-		files = append(files, base)
-	}
-	paths := make([]string, 0, len(dirs)*len(files))
-	seens := make(map[string]bool)
 
-	for _, d := range dirs {
-		for _, f := range files {
-			p := filepath.Join(d, f)
-			if _, ok := seens[p]; ok {
-				continue
-			}
-			seens[p] = true
-			paths = append(paths, p)
-		}
-	}
-	return paths
-}
