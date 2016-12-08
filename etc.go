@@ -22,7 +22,7 @@ type Config struct {
 var DefaultConfig *Config
 
 func init() {
-	prgname := strings.ToUpper(os.Args[0])
+	prgname := strings.ToUpper(filepath.Base(os.Args[0]))
 	dirname := os.Getenv(fmt.Sprintf("%s_DIRNAME", prgname))
 	filename := os.Getenv(fmt.Sprintf("%s_FILENAME", prgname))
 	config := os.Getenv(fmt.Sprintf("%s_CONFIG", prgname)) 
@@ -77,7 +77,7 @@ func (c Config) Configure(v interface{}) error {
 			err = ini.NewReader(r).Read(v)
 		}
 		r.Close()
-		if p == c.Default && err != nil {
+		if p == c.Default && err == nil {
 			break
 		}
 	}
